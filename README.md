@@ -18,6 +18,20 @@ open index.html
 python3 -m http.server 8765
 ```
 
+## スマホ・タブレットで使う（ホーム画面に追加）
+
+このアプリはホーム画面に追加できる Web アプリ（PWA）です。一度開けば、電波のない所でも開けます。
+
+- 公開先：<https://ehoannet-dev.github.io/fukusenzu/>（GitHub Pages。リポジトリ `ehoannet-dev/fukusenzu` の `main` をそのまま公開）
+- **Android（Chrome）**：ページ右上の「ホーム画面に追加」を押す → 追加のダイアログで「インストール」。出ないときは Chrome のメニュー（⋮）→「ホーム画面に追加」。
+- **iPad／iPhone（Safari）**：下の「共有」ボタン →「ホーム画面に追加」。
+- 横向きで使うのがおすすめ（作業エリアが広い）。
+- 更新したいとき：`sw.js` の `VERSION` を上げてから `git push`。開いたときに「新しい版に更新しました」と出る。
+
+### 器具写真の撮影（3D 部品づくりの参考写真）
+
+右上の「📷 器具写真」（`photo.html`）で、器具ごと・向きごとに写真を撮ります。写真は元の画質のまま端末に保存され、「Mac へ送る設定」をしておくと GitHub の非公開リポジトリ `ehoannet-dev/kigu-photos` へ自動で送られます。Mac では `sh tools/pull_photos.sh`（または Claude に「器具写真を取り込んで」）で `~/Pictures/器具素材/raw/<器具>/` に取り込みます。設定の手順（GitHub のトークンの作り方）はページの中に書いてあります。
+
 ## 練習の流れ
 
 ### ① 支給ケーブルを切る
@@ -335,6 +349,8 @@ python3 -m http.server 8765
 
 ```
 index.html              画面
+photo.html / js/photo.js  器具写真の撮影ページ（端末に保存 → GitHub の非公開リポジトリへ送る）
+manifest.webmanifest / sw.js / js/pwa.js / icons/  ホーム画面に追加・オフライン対応（PWA）
 css/style.css           スタイル（ライト／ダーク対応）
 js/problems.js          ケーブルの種類と No.1〜No.5 の問題データ（単線図・器具・端子・ケーブル・模範解答）
 js/problems/no06.js …   No.6〜No.13 の問題データ（1問1ファイル。window.PROBLEMS.push で足す）
@@ -345,6 +361,7 @@ tools/check-problems.js 全問の模範解答を node で採点して、100点�
 tools/golden.js         採点エンジンの回帰テスト（模範解答と誤配線の例の採点結果を保存して比べる）
 tools/grading/grade-noNN.js  No.6〜13 の採点テスト（別解は合格・誤配線は不合格になるか。各問30〜40例）
 tools/grading/review-regressions.js  公開前レビューで見つかった採点の不具合の再発テスト
+tools/pull_photos.sh    スマホで撮った器具写真を Mac（~/Pictures/器具素材/raw）に取り込む
 tools/overlap-browser.js 開発用：作業エリアの文字・札・器具の重なりをブラウザで調べる
 tools/e2e-browser.js    開発用：タップ操作だけで「切る→置く→配線→接続→採点」を通す
 ```
