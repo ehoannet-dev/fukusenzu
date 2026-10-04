@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>複線図＆実配線トレーナー｜第二種電気工事士</title>
+<link rel="stylesheet" href="css/style.css?v=20261005a">
+<!-- ホーム画面に追加できるアプリ（PWA）の設定 -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a6bd4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="複線図">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">⚡</span>
+    <div>
+      <h1>複線図＆実配線トレーナー</h1>
+      <p class="sub">配線図（単線図）から、実際の配線をつないで練習する</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <label class="field">
+      <span>問題</span>
+      <select id="problem-select"></select>
+    </label>
+    <button id="btn-check" class="btn btn-primary">採点する</button>
+    <button id="btn-answer" class="btn">正解を見る</button>
+    <button id="btn-reset" class="btn btn-danger" title="ケーブル・電線・接続点をすべて消して、何もない状態に戻します">1からやり直す</button>
+    <a id="btn-photo" class="btn btn-photo" href="photo.html" title="3D部品づくりの参考に、器具の写真を向きごとに撮って保存します">📷 器具写真</a>
+    <button id="btn-install" class="btn btn-install" hidden title="スマホ・タブレットのホーム画面に、アプリとして追加します">ホーム画面に追加</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ============ 左：問題（単線図） ============ -->
+  <aside class="pane pane-left">
+    <section class="card card-single">
+      <h2 class="card-title">① 配線図（単線図）</h2>
+      <div class="svg-frame">
+        <svg id="single-line" viewBox="0 0 470 520" role="img" aria-label="単線図"></svg>
+      </div>
+      <p class="hint-text">この図を読み取って、右の作業エリアで実際の電線をつなぎます。</p>
+    </section>
+
+    <details class="card card-conditions" open>
+      <summary class="card-title">施工条件</summary>
+      <ul id="conditions" class="conditions"></ul>
+    </details>
+
+    <details class="card card-tips" open>
+      <summary class="card-title">ワンポイント</summary>
+      <ul id="tips" class="conditions"></ul>
+    </details>
+
+    <details class="card card-steps" open>
+      <summary class="card-title">手順ガイド</summary>
+      <ol id="steps" class="steps"></ol>
+      <button id="btn-hint" class="btn btn-wide">つぎに何をする？（ヒント）</button>
+    </details>
+
+    <details class="card card-help" open>
+      <summary class="card-title">操作方法</summary>
+      <dl class="help">
+        <dt>① 支給ケーブルを切る</dt><dd>本番と同じで、ケーブルは<b>長いまま</b>支給されます。まず自分で切り分けます。<br>
+        <b>「① 支給ケーブル」</b>から1つ<b>タップして選ぶ</b>（残りの長さが mm で出ます）→ <b>「ケーブルを切る」</b>を押す → <b>どの区間ぶんか</b>を選ぶ → <b>長さを4つから選ぶ</b>。<br>
+        <b>切る長さ ＝ 図の寸法 ＋ 接続・結線する端ごとに50mm</b>（ジョイントボックスの中で接続するぶん／器具に結線するぶん）。
+        <b>電源側と施工省略側は切りっぱなし</b>なので足しません。例：図の寸法150mmでボックスと器具をつなぐ区間 → <b>250mm</b>。<br>
+        まちがった長さを選ぶと、<b>なぜ違うのかを説明して選び直せます</b>（切られません）。
+        <small>※実際の試験では切断寸法の指定はありません。このアプリでは上の規則を「正解」としています。</small></dd>
+        <dt>② 切ったケーブルを置く</dt><dd>図の<b>点線の枠（「ケーブルを選ぶ」）</b>を<b>タップ</b>すると、<b>切ってあるケーブルが長さつきの一覧</b>で出るので、えらぶだけです（<b>「② 切ったケーブル」</b>から枠へドラッグ＆ドロップ、または材料をタップ → 枠をタップでも置けます）。置いたケーブルは<b>ジョイントボックスに少し入った状態</b>で描かれ、下に<b>長さ</b>が出ます（その区間に合わない長さは<b>赤</b>）。<br>外すときは、ケーブルをクリックして<b>「このケーブルを外す」</b>（右クリックでも外せます）</dd>
+        <dt>③ 心線をえらぶ</dt><dd><b>ケーブルをクリック</b>（ケーブル本体でも名前の文字でもOK）すると、<b>心線の色（黒／白／赤）</b>が出ます。えらぶと、その心線が<b>青く光って「えらんでいる」状態</b>になります。<b>この時点では電線は引かれません。</b>もう一度おすと取り消しです</dd>
+        <dt>④ つなぎ先をクリック → 「ここに接続する」</dt><dd>心線をえらんだまま、<b>器具の端子（青く光ります）をクリック</b>すると <b>「ここに接続する」</b> ボタンが出ます。押すと、その心線が<b>ジョイントボックスからその端子まで</b>つながります</dd>
+        <dt>⑤ ボックスの中でまとめる（接続点）</dt><dd><b>心線を2本えらぶ</b>と <b>「接続する（2本）」</b> が出ます。押すと、その2本が<b>ジョイントボックスの中でつながり</b>、リングスリーブ／差込形コネクタ（<b>差コネ2・差コネ3</b>と表示）が自動で決まります。3本一度でもOK。<br><b>接続点に足す</b>：<b>接続点をクリック</b> → 心線をえらぶ → <b>「この接続点に追加」</b><br>④と⑤は<b>どちらが先でもかまいません</b>。先にボックスの中でまとめた場合、器具につないでいない端は<b>赤い丸</b>で示されるので、あとからその心線をえらんで端子をクリックします</dd>
+        <dt>渡り線（点滅器どうし）</dt><dd>ケーブルを使わないので、<b>端子をクリック → となりの端子をクリック</b>で引きます</dd>
+        <dt>電線の色</dt><dd>ケーブルの中にある色しか使えません（2心＝黒・白／3心＝黒・白・赤）。<b>ケーブルをクリックしたときの一覧からえらびます</b>（渡り線は黒。<kbd>1</kbd>黒 <kbd>2</kbd>白 <kbd>3</kbd>赤 でも変えられます）</dd>
+        <dt>つなぎ目を1つだけ外す</dt><dd><b>つなぎ目の線をクリック</b>すると青く光って<b>×</b>が出ます。押すと<b>そこ1か所だけ</b>が外れます。<br>
+        ・<b>接続点と心線の間の線</b> → その心線だけを<b>リングスリーブ（コネクタ）から外す</b>。<b>スリーブも、ほかの心線も残ります</b>（1本だけになっても<b>スリーブは残る</b>ので、あとから足せます。本数が減れば刻印も自動で変わります）<br>
+        ・<b>器具へ伸びている線</b> → その心線を<b>端子から外す</b>（電線は残り、端が<span style="color:var(--bad)">赤い丸</span>になります）<br>
+        <kbd>Delete</kbd>キー・<b>右クリック</b>でも同じです。<kbd>⌘Z</kbd>で戻せます</dd>
+        <dt>心線ごと消す</dt><dd>ケーブルをクリックしたときの一覧で、心線ごとの<b>✕</b>。その心線の電線そのものが消えます</dd>
+        <dt>外した心線をまた付ける</dt><dd><b>接続点をクリック</b> → その心線をえらぶ → <b>「この接続点に追加」</b>。本数が増えると刻印も自動で変わります（○→小→中）</dd>
+        <dt>通電の確認（通電試験）</dt><dd>図の<b>電源の中にあるスイッチ</b>を「<b>入</b>」にして、図の中の<b>点滅器のスイッチ</b>をクリックします。<b>対応する器具だけが光ればOK</b>（位置表示灯「ホタル」はスイッチOFFのときに光ります）。<br>3路・4路スイッチは、タップするたびに<b>中の接点の組み合わせ（緑の線）</b>が切り替わります。タイムスイッチ・リモコンリレー・自動点滅器（端子台で代用）は、端子台の<b>「入／切」「暗い／明るい」</b>をタップします。電気が流れている心線は<b>光って流れます</b>。短絡していると知らせます</dd>
+        <dt>リングスリーブの適用（刻印）</dt><dd>1.6×2本＝<b>小・○</b>／1.6×3〜4本＝<b>小・小</b>／2.0×1＋1.6×1〜2本＝<b>小・小</b>／2.0×2本＝<b>小・小</b><br>
+        1.6×5〜6本＝<b>中・中</b>／2.0×1＋1.6×3〜5本＝<b>中・中</b>／2.0×2＋1.6×1〜3本＝<b>中・中</b>／2.0×3〜4本＝<b>中・中</b><br>
+        <small>この表のとおりに自動で判定します（表にない組合せは「適用外」と出ます）</small></dd>
+        <dt>拡大・移動</dt><dd>ボックスを<b>ダブルクリック</b>で拡大、<b>マウスホイール</b>でも拡大・縮小、背景ドラッグで移動。<b>何もない所をダブルクリック</b>すると元の大きさに戻ります</dd>
+        <dt>元に戻す</dt><dd><b>元に戻す</b>ボタン（<kbd>⌘Z</kbd>）。押すたびに<b>何がいくつ変わったか</b>を画面下に出します（戻しすぎたときは <kbd>⇧⌘Z</kbd>）</dd>
+        <dt>1からやり直す</dt><dd><b>「1からやり直す」</b>（右上と材料バーの右）で、<b>切ったケーブル・電線・接続点・採点結果・スイッチ</b>をすべて消して何もない状態に戻します。押しまちがい防止のため<b>2回押し</b>（5秒で取り消し）。消したあとも <kbd>⌘Z</kbd> で戻せます</dd>
+      </dl>
+    </details>
+  </aside>
+
+  <!-- ============ 中央：作業エリア ============ -->
+  <section class="pane pane-center">
+    <div class="material-bar" id="material-bar">
+      <div class="mb-group mb-cables">
+        <span class="mb-title">① 支給ケーブル<small>えらんで「切る」</small></span>
+        <ul id="materials" class="cable-palette"></ul>
+        <button id="btn-cut" class="btn btn-sm btn-cut" disabled>ケーブルを切る</button>
+      </div>
+      <div class="mb-group mb-cut">
+        <span class="mb-title">② 切ったケーブル<small>図の点線の枠へ</small></span>
+        <ul id="materials-cut" class="cable-palette"></ul>
+      </div>
+      <div class="mb-group mb-joins">
+        <span class="mb-title">③ 接続材料<small>接続すると減ります</small></span>
+        <ul id="materials-join" class="cable-palette"></ul>
+      </div>
+      <div class="mb-actions">
+        <button id="btn-undo" class="btn btn-sm">元に戻す</button>
+        <button id="btn-reset2" class="btn btn-sm btn-danger" title="ケーブル・電線・接続点をすべて消して、何もない状態に戻します">1からやり直す</button>
+      </div>
+    </div>
+
+    <div class="stage">
+      <svg id="workspace" viewBox="0 0 1240 800" role="application" aria-label="作業エリア。端子やジョイントボックスをクリック（Tabで移動しEnterで選択）して電線を引きます"></svg>
+      <div id="ghost-hint" class="ghost-hint">①図の「ケーブルを選ぶ」の枠をタップしてえらびます</div>
+      <div id="core-picker" class="core-picker" hidden role="dialog" aria-label="心線を選ぶ"></div>
+    </div>
+
+    <div id="statusbar" class="statusbar" role="status" aria-live="polite">準備完了。まず <b>「① 支給ケーブル」をえらんで「ケーブルを切る」</b> から始めます。</div>
+  </section>
+
+  <!-- ============ 右：判定・通電 ============ -->
+  <aside class="pane pane-right">
+    <section class="card card-score">
+      <h2 class="card-title">③ 採点結果</h2>
+      <div id="score" class="score">
+        <div class="score-ring" data-state="idle"><span id="score-value">—</span></div>
+        <div id="score-label" class="score-label">「採点する」を押してください</div>
+      </div>
+      <ul id="issues" class="issues"></ul>
+    </section>
+
+    <section class="card card-bundles">
+      <h2 class="card-title">ジョイントボックスの中</h2>
+      <p class="hint-text" style="margin:0 0 8px">ケーブルの心線を2本えらんで<b>「接続する」</b>。ここの線端をタップしてえらぶこともできます。</p>
+      <div id="bundle-list" class="bundle-list"></div>
+    </section>
+  </aside>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="assertive" hidden></div>
+
+<script src="js/problems.js?v=20260929a"></script>
+<script src="js/problems/no06.js?v=20260929a"></script>
+<script src="js/problems/no07.js?v=20260929a"></script>
+<script src="js/problems/no08.js?v=20260929a"></script>
+<script src="js/problems/no09.js?v=20260929a"></script>
+<script src="js/problems/no10.js?v=20260929a"></script>
+<script src="js/problems/no11.js?v=20260929a"></script>
+<script src="js/problems/no12.js?v=20260929a"></script>
+<script src="js/problems/no13.js?v=20260929a"></script>
+<script src="js/engine.js?v=20260929a"></script>
+<script src="js/render.js?v=20260929a"></script>
+<script src="js/app.js?v=20260929a"></script>
+<script src="js/pwa.js?v=20261005a"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>器具写真の撮影｜複線図トレーナー</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a6bd4">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="複線図">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<style>
+/* 撮影ページ：スマホ縦1列が基本。上に器具えらび、下に撮影カット（タブレットでは 2〜4 列） */
+:root {
+  --bg: #eef1f5; --surface: #ffffff; --ink: #16202b; --muted: #5a6a7a; --line: #d8e0e9;
+  --accent: #0a6bd4; --accent-ink: #ffffff; --done: #12875a; --warn: #c77700; --bad: #d33a2c; --chip: #e9eef4;
+  --shadow: 0 1px 2px rgba(18, 32, 48, .06), 0 8px 24px rgba(18, 32, 48, .08);
+  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11161c; --surface: #19202a; --ink: #e9eef4; --muted: #a9b6c4; --line: #2c3743;
+    --accent: #4b9cf0; --accent-ink: #0b1724; --done: #4cc583; --warn: #f0b429; --bad: #ff6b5e; --chip: #232c37;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 40px; display: grid; gap: 16px; }
+h1, h2, h3 { margin: 0; line-height: 1.3; text-wrap: balance; }
+h1 { font-size: 21px; }
+h2 { font-size: 16px; }
+p { margin: 0; }
+small, .muted { color: var(--muted); }
+button, input, select { font: inherit; color: inherit; }
+button:focus-visible, a:focus-visible, .tile-img:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+
+/* 見出し */
+.head { display: grid; gap: 6px; }
+.head .nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.head p.lead { color: var(--muted); font-size: 14px; max-width: 62ch; }
+.state { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.pill.ok { color: var(--done); }
+.pill.ng { color: var(--bad); }
+.pill.warn { color: var(--warn); }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+
+/* 撮る器具（上に固定） */
+.shoot { display: grid; gap: 12px; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; border-bottom: 1px solid var(--line); display: flex; align-items: end; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.bar .meter { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+.bar .meter b { color: var(--done); }
+.pick { display: grid; gap: 2px; flex: 1 1 260px; min-width: 0; }
+.pick span { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+.pick select { font-size: 16px; font-weight: 700; padding: 9px 36px 9px 12px; border-radius: 10px; border: 1px solid var(--accent); background: var(--surface); color: var(--ink); width: 100%; min-height: 44px; }
+.other { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1 1 100%; }
+.other input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); min-width: 0; flex: 1 1 220px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 撮影カット */
+.shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 640px) { .shots { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .shots { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; box-shadow: var(--shadow); min-width: 0; }
+.tile.has { border-color: color-mix(in srgb, var(--done) 55%, var(--line)); }
+.tile-img { position: relative; aspect-ratio: 4 / 3; max-width: 100%; min-height: 0; overflow: hidden; background: var(--chip); display: grid; place-items: center; border: 0; padding: 0; width: 100%; cursor: pointer; }
+.tile-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.tile-img .ph { color: var(--muted); font-size: 12px; text-align: center; padding: 8px; }
+.tile-img .count { position: absolute; top: 6px; right: 6px; background: var(--done); color: #fff; font-size: 12px; border-radius: 999px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+.tile-img .sent { position: absolute; left: 6px; bottom: 6px; background: rgba(18, 135, 90, .92); color: #fff; font-size: 11px; border-radius: 6px; padding: 1px 7px; }
+.tile-img .sent.no { background: rgba(199, 119, 0, .92); }
+.tile-img .busy { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .45); color: #fff; font-size: 13px; }
+.tile-body { padding: 8px 10px 4px; display: grid; gap: 2px; }
+.tile-body b { font-size: 14px; }
+.tile-body small { font-size: 12px; line-height: 1.45; }
+.tile-act { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px 10px 10px; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 6px; cursor: pointer; font-size: 13px; min-height: 40px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* 設定・コツ */
+.notes { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 760px) { .notes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
+.card ul, .card ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; font-size: 14px; }
+.card label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.card input { padding: 9px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 15px; min-width: 0; width: 100%; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row .btn { flex: 1 1 auto; }
+.path { font-family: var(--mono); font-size: 12.5px; background: var(--chip); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+details summary { cursor: pointer; font-weight: 700; }
+#gh-state { font-size: 13px; min-height: 1.3em; }
+
+/* 写真を大きく見る */
+.viewer { position: fixed; inset: 0; z-index: 20; background: rgba(10, 12, 14, .9); display: grid; grid-template-rows: auto 1fr auto; padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px calc(env(safe-area-inset-bottom, 0px) + 12px); gap: 10px; color: #f1f3f4; }
+.viewer .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.viewer .stage { min-height: 0; display: grid; place-items: center; }
+.viewer .stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+.viewer .strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.viewer .strip button { border: 2px solid transparent; padding: 0; border-radius: 6px; background: none; flex: 0 0 auto; cursor: pointer; }
+.viewer .strip button[aria-current="true"] { border-color: #8fc2ff; }
+.viewer .strip img { width: 64px; height: 48px; object-fit: cover; display: block; border-radius: 4px; }
+.viewer .meta { font-size: 12.5px; color: #c4ccd2; font-variant-numeric: tabular-nums; }
+.viewer .vbtns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.viewer .btn { background: #2a3239; color: #f1f3f4; border-color: #3d4750; white-space: nowrap; }
+.viewer .btn.danger { color: #ff8f88; border-color: #6b3a37; }
+.viewer .note { font-size: 12.5px; color: #ffd9a3; flex: 1 1 100%; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 16px); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); box-shadow: var(--shadow); }
+.banner { border-radius: 10px; padding: 10px 14px; font-size: 14px; background: color-mix(in srgb, var(--warn) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line)); }
+@media (prefers-reduced-motion: no-preference) { .btn { transition: background-color .12s, border-color .12s; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <div class="nav">
+      <a href="index.html">← 配線トレーナーへ</a>
+      <button id="btn-install" class="btn" type="button" hidden>ホーム画面に追加</button>
+    </div>
+    <h1>器具写真の撮影</h1>
+    <p class="lead">3D 部品づくりの参考写真を、器具ごと・向きごとに撮ります。写真は元の画質のままこの端末に保存され、「Mac へ送る設定」をしておくと自動で Mac へ送られます。</p>
+    <div class="state" aria-live="polite">
+      <span class="pill" id="st-store"><span class="dot"></span>保存先を確認中…</span>
+      <span class="pill" id="st-count">端末に 0 枚</span>
+      <span class="pill" id="st-gh"><span class="dot"></span>Mac へ送る設定：まだ</span>
+      <span class="pill" id="st-usage" hidden></span>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section aria-label="撮影カット" class="shoot">
+    <div class="bar">
+      <label class="pick" for="dev">
+        <span>撮る器具</span>
+        <select id="dev"></select>
+      </label>
+      <span class="meter" id="cur-meter"></span>
+      <div class="other" id="other-row" hidden>
+        <label for="other-name">名前</label>
+        <input id="other-name" type="text" maxlength="40" placeholder="例：埋込スイッチボックス">
+      </div>
+    </div>
+    <h2 id="cur-title" class="sr">ランプレセプタクル</h2>
+    <div class="shots" id="shots"></div>
+  </section>
+
+  <section class="notes" aria-label="設定と撮り方">
+    <div class="card" id="gh-card">
+      <h2>Mac へ送る設定</h2>
+      <p class="muted" style="font-size:13.5px">撮った写真は、GitHub にある自分だけの非公開リポジトリ <b>kigu-photos</b> へ 1 枚ずつ送られ、Mac の Claude がそこから取り込みます。設定はこの端末にだけ保存されます（端末ごとに 1 回）。</p>
+      <label>リポジトリ<input id="gh-repo" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="ehoannet-dev/kigu-photos"></label>
+      <label>合言葉（GitHub のトークン）<input id="gh-token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_… をここに貼る"></label>
+      <div class="row">
+        <button id="gh-save" class="btn primary" type="button">保存して確かめる</button>
+        <button id="gh-clear" class="btn danger" type="button" hidden>この端末から合言葉を消す</button>
+      </div>
+      <p id="gh-state" class="muted"></p>
+      <div class="row">
+        <button id="btn-sync" class="btn" type="button" disabled>未送信の写真を送る</button>
+        <button id="btn-purge" class="btn" type="button" disabled>送信済みの写真を端末から消す</button>
+      </div>
+      <details>
+        <summary>合言葉（トークン）の作り方（最初の 1 回だけ）</summary>
+        <ol>
+          <li>ブラウザで <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com の「Fine-grained token を作る」ページ</a>を開く（ログインを求められたら GitHub にログイン）。</li>
+          <li><b>Token name</b> に「器具写真」など。<b>Expiration</b> は 1 年（期限が来たら同じ手順で作り直す）。</li>
+          <li><b>Repository access</b> で「Only select repositories」をえらび、<b>kigu-photos</b> を選ぶ。</li>
+          <li><b>Permissions → Repository permissions → Contents</b> を <b>Read and write</b> にする（ほかはそのまま）。</li>
+          <li>「Generate token」を押し、表示された <span class="path">github_pat_…</span> で始まる長い文字列をコピーする（この画面を閉じると二度と見られません）。</li>
+          <li>上の「合言葉」に貼り付けて「保存して確かめる」。</li>
+        </ol>
+        <p class="muted" style="font-size:12.5px">この合言葉でできるのは kigu-photos へのファイルの追加・読み取りだけです。ほかのリポジトリや設定には使えません。</p>
+      </details>
+    </div>
+    <div class="card">
+      <h2>きれいに撮るコツ</h2>
+      <ul>
+        <li><b>フラッシュは OFF</b>、ズームは <b>1 倍</b>。ポートレートモードと超広角は使わない</li>
+        <li>白か薄いグレーの紙の上に置き、器具は<b>背景から 20cm 以上</b>離す</li>
+        <li>窓際の明るい日陰か、左右 2 方向からのライト。蛍光灯と日光を混ぜない</li>
+        <li>器具を長押しして<b>ピントと明るさを固定</b>してから撮る（白い樹脂が白飛びしにくい）</li>
+        <li>端子の接写は、<b>刻印（W・接地側）が読める</b>ところまで寄る</li>
+        <li>寸法の写真は、ノギスか定規の目盛りが読めるように</li>
+        <li>練習で使う前の、<b>新品のうちに</b>撮る</li>
+      </ul>
+      <h2>Mac での取り込み</h2>
+      <p style="font-size:14px">Mac の Claude に「器具写真を取り込んで」と頼むと、<span class="path">~/Pictures/器具素材/raw/&lt;器具&gt;/01-front_日時.jpg</span> のように器具ごとに保存されます。</p>
+      <p class="muted" style="font-size:12.5px">送る設定をしない場合も、写真はこの端末に残ります。大きく表示して「ダウンロード」や「共有」で取り出せます。</p>
+    </div>
+  </section>
+</div>
+
+<input id="in-camera" type="file" accept="image/*" capture="environment" hidden>
+<input id="in-pick" type="file" accept="image/*" multiple hidden>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="v-title">
+  <div class="top">
+    <div><b id="v-title"></b><div class="meta" id="v-meta"></div></div>
+    <button class="btn" id="v-close" type="button">閉じる</button>
+  </div>
+  <div class="stage"><img id="v-img" alt=""></div>
+  <div>
+    <div class="strip" id="v-strip"></div>
+    <div class="vbtns">
+      <span class="note" id="v-del-note" hidden></span>
+      <a class="btn" id="v-dl" href="#" download>ダウンロード</a>
+      <button class="btn" id="v-share" type="button" hidden>共有</button>
+      <button class="btn danger" id="v-del" type="button">この写真を消す</button>
+      <button class="btn danger" id="v-del-ok" type="button" hidden>本当に消す</button>
+      <button class="btn" id="v-del-no" type="button" hidden>やめる</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="js/photo.js?v=20261005a"></script>
+<script src="js/pwa.js?v=20261005a"></script>
+</body>
+</html>

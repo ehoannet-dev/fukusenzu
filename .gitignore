@@ -1,0 +1,5 @@
+# 公開リポジトリに入れないもの（手元の Mac だけに置く）
+.DS_Store
+docs/
+.claude/
+node_modules/
