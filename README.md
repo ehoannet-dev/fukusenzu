@@ -32,6 +32,10 @@ python3 -m http.server 8765
 
 右上の「📷 器具写真」（`photo.html`）で、器具ごと・向きごとに写真を撮ります。写真は元の画質のまま端末に保存され、「Mac へ送る設定」をしておくと GitHub の非公開リポジトリ `ehoannet-dev/kigu-photos` へ自動で送られます。Mac では `sh tools/pull_photos.sh`（または Claude に「器具写真を取り込んで」）で `~/Pictures/器具素材/raw/<器具>/` に取り込みます。設定の手順（GitHub のトークンの作り方）はページの中に書いてあります。
 
+### 景品の 3D 部品（試作）
+
+右上の「🎁 景品の試作」（`reward.html`）で、ランプレセプタクルの 3D 部品が浮いて回ります（ドラッグで回転、ピンチで拡大）。学習ゲームの景品として使う予定の試作です。作り方（写真から寸法を読み、Blender のスクリプトで組み立て、three.js で表示）と作り方の比較は、手元の `docs/ランプレセプタクル3D/` にあります。3D データは `models/lamp_black.glb`。
+
 ## 練習の流れ
 
 ### ① 支給ケーブルを切る
@@ -350,6 +354,7 @@ python3 -m http.server 8765
 ```
 index.html              画面
 photo.html / js/photo.js  器具写真の撮影ページ（端末に保存 → GitHub の非公開リポジトリへ送る）
+reward.html / models/   景品の 3D 部品ビューア（three.js 同梱）と 3D データ（GLB）
 manifest.webmanifest / sw.js / js/pwa.js / icons/  ホーム画面に追加・オフライン対応（PWA）
 css/style.css           スタイル（ライト／ダーク対応）
 js/problems.js          ケーブルの種類と No.1〜No.5 の問題データ（単線図・器具・端子・ケーブル・模範解答）
