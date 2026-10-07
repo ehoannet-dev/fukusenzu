@@ -34,7 +34,7 @@ python3 -m http.server 8765
 
 ### 景品の 3D 部品（試作）
 
-右上の「🎁 景品の試作」（`reward.html`）で、ランプレセプタクルの 3D 部品が浮いて回ります（ドラッグで回転、ピンチで拡大）。学習ゲームの景品として使う予定の試作です。作り方（写真から寸法を読み、Blender のスクリプトで組み立て、three.js で表示）と作り方の比較は、手元の `docs/ランプレセプタクル3D/` にあります。3D データは `models/lamp_black.glb`。
+右上の「🎁 景品の試作」（`rewards.html`）で景品の一覧が開き、器具を選ぶと、その 3D 部品が浮いて回ります（横になぞると回転、縦になぞると裏返し、ピンチで拡大、「裏側を見る」で裏を正面に）。学習ゲームの景品として使う予定の試作です。今あるのはランプレセプタクル（`reward.html`）、引掛シーリング（角形）（`reward_ceiling_square.html`）、引掛シーリング（丸形）（`reward_ceiling_round.html`）。3D データは `models/` の GLB。
 
 ## 練習の流れ
 
@@ -354,7 +354,8 @@ python3 -m http.server 8765
 ```
 index.html              画面
 photo.html / js/photo.js  器具写真の撮影ページ（端末に保存 → GitHub の非公開リポジトリへ送る）
-reward.html / models/   景品の 3D 部品ビューア（three.js 同梱）と 3D データ（GLB）
+rewards.html            景品の一覧（img/rewards/ にサムネイル）
+reward*.html / models/  景品の 3D 部品ビューア（器具ごとに 1 ページ。three.js 同梱）と 3D データ（GLB）
 manifest.webmanifest / sw.js / js/pwa.js / icons/  ホーム画面に追加・オフライン対応（PWA）
 css/style.css           スタイル（ライト／ダーク対応）
 js/problems.js          ケーブルの種類と No.1〜No.5 の問題データ（単線図・器具・端子・ケーブル・模範解答）

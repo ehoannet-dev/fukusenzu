@@ -5,7 +5,7 @@
    ・VERSION を上げると古い保存を捨てて、起動時に取り直す（公開するたびに上げる）
    ・別のサイト（GitHub の API など）への通信には触らない
    =========================================================== */
-const VERSION = 'v20261005d';
+const VERSION = 'v20261008a';
 const CACHE = 'fukusenzu-' + VERSION;
 const SHELL = [
   './', './index.html', './photo.html', './manifest.webmanifest',
@@ -14,7 +14,9 @@ const SHELL = [
   './js/problems/no10.js', './js/problems/no11.js', './js/problems/no12.js', './js/problems/no13.js',
   './js/engine.js', './js/render.js', './js/app.js', './js/pwa.js', './js/photo.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png', './icons/apple-touch-icon.png',
-  './reward.html', './models/lamp_black.glb'
+  './rewards.html', './reward.html', './reward_ceiling_square.html', './reward_ceiling_round.html',
+  './models/lamp_black.glb', './models/ceiling_square.glb', './models/ceiling_round.glb',
+  './img/rewards/lamp.jpg', './img/rewards/ceiling_square.jpg', './img/rewards/ceiling_round.jpg'
 ];
 
 self.addEventListener('install', (e) => {
