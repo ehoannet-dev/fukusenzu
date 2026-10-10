@@ -871,3 +871,254 @@ details.card > summary.card-title:focus-visible {
   .btn-cut { font-size: 10.5px; padding: 4px 8px; }
   .cut-empty { font-size: 10px; padding: 5px 7px; white-space: normal; max-width: 150px; }
 }
+
+/* ===========================================================
+   スマホ（縦・横）対応（2026-10-10）
+   ・スマホの大きさにだけ効く。タブレット（768〜1180px）・パソコンの見え方は変えない
+     スマホ縦 … 幅 699px 以下（高さ 501px 以上）
+     スマホ横 … 高さ 500px 以下かつ幅 1000px 以下
+     この2つを合わせた条件は js/app.js の PHONE_MQ と同じ文字列にする
+   ・作業エリアは、スマホでは図を一定の幅（app.js の PHONE_W）で描き、枠（.ws-scroll）の中で左右にスクロールする
+   ・「元に戻す」「1からやり直す」は作業エリアの上の行（.ws-tools）に1つだけ出す（見出しと材料バーの分は出さない）
+   =========================================================== */
+.ws-tools { display: none; }
+.ws-scroll { display: contents; }   /* タブレット・パソコンでは枠が無いのと同じ */
+.phone-only { display: none; }      /* スマホのときだけ出す説明（操作方法など） */
+.hint-text.dir-below { display: none; }   /* 「右の作業エリア」をスマホ縦では「下の」にする（文を丸ごと出し分ける） */
+
+@media (max-width: 699px), (max-height: 500px) and (max-width: 1000px) {
+  /* スマホのときだけの説明に切り替える（index.html の .phone-only / .pc-only。
+     タブレット・パソコンの文の中に span を入れると、文字の描き方がわずかに変わるので、要素ごと出し分ける） */
+  dt.phone-only, dd.phone-only { display: block; }
+  .pc-only { display: none; }
+
+  /* 重複していた「1からやり直す」「元に戻す」は作業エリアの上の行だけにする（動きは同じ） */
+  #btn-reset, .material-bar .mb-actions { display: none; }
+
+  /* 器具写真・景品の試作は、絵文字だけの小さいボタンに（文字はタップしたときの説明 title に残る） */
+  .topbar-actions #btn-photo, .topbar-actions #btn-reward {
+    font-size: 0; gap: 0; padding: 0; width: 40px; height: 40px; justify-content: center;
+  }
+  #btn-photo::before { content: '📷'; font-size: 18px; }
+  #btn-reward::before { content: '🎁'; font-size: 18px; }
+  .topbar .field > span { flex: 0 0 auto; white-space: nowrap; }
+
+  /* 作業エリア：道具の行 → 図（スクロールする枠）→ 案内 の縦の並び。図に何も重ねない */
+  .stage { display: flex; flex-direction: column; height: auto; min-height: 0; }
+  .ws-tools {
+    display: flex; align-items: center; gap: 6px; flex: 0 0 auto;
+    padding: 6px 8px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .ws-tools .btn { min-height: 36px; font-size: 12.5px; padding: 4px 10px; }
+  .ws-tools #btn-reset3 { white-space: normal; line-height: 1.2; text-align: center; }
+  .ws-zoom { margin-left: auto; display: flex; gap: 4px; flex: 0 0 auto; }
+  .ws-zoom .btn { min-width: 40px; padding: 4px 8px; font-size: 16px; line-height: 1; }
+  .ws-zoom #btn-zoom-fit { font-size: 12.5px; }
+  .ws-scroll {
+    display: block; position: relative; flex: 0 1 auto; min-height: 0;
+    overflow: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+    background: var(--board); scrollbar-width: thin;
+  }
+  #workspace { width: 100%; height: auto; flex: none; }   /* 実際の幅・高さは app.js の sizeWorkspace が px で書く */
+  /* 案内（ghost-hint）は図の上に重ねず、図の下の1行にする */
+  .ghost-hint {
+    position: static; transform: none; left: auto; bottom: auto; flex: 0 0 auto;
+    border-radius: 0; padding: 6px 10px; font-size: 12px; line-height: 1.45; text-align: center;
+    background: #2a3644; color: #fff;
+  }
+  .ghost-hint.is-hidden { display: none; }
+  /* 「ケーブルを切る」ダイアログは、作業エリアではなく画面の真ん中に出す（材料バーを見ているときも見える） */
+  .core-picker.is-center { position: fixed; z-index: 40; max-height: calc(100vh - 24px); }
+
+  /* 押しやすい大きさ（指で押す部品は高さ 36px 前後以上） */
+  .btn-cut { min-height: 36px; }
+  details.card > summary.card-title { min-height: 36px; }
+  .cp-close { width: 34px; height: 34px; font-size: 15px; }
+  .cp-del { width: 38px; }
+  .member-del, .end-row .row-del { width: 30px; height: 30px; }
+  .pt-tools .btn, .jb-actions .btn { min-height: 34px; }
+  .end-row { min-height: 38px; }
+}
+
+/* ===== スマホ縦（幅 699px 以下） ===== */
+@media (max-width: 699px) and (min-height: 501px) {
+  /* 作業エリアは単線図の下にある */
+  .hint-text.dir-side { display: none; }
+  .hint-text.dir-below { display: block; }
+
+  /* 見出し：1段目 ロゴと題名／2段目 問題の選択／3段目 採点する・正解を見る・📷・🎁（ホーム画面に追加は4段目） */
+  .topbar {
+    display: grid; grid-template-columns: 1fr 1fr 40px 40px; align-items: center;
+    gap: 8px; padding: 8px 12px;
+  }
+  .brand { grid-column: 1 / -1; gap: 10px; min-width: 0; }
+  .brand .logo { width: 32px; height: 32px; font-size: 18px; border-radius: 10px; }
+  .topbar h1 { font-size: 16px; }
+  .topbar-actions { display: contents; }
+  .topbar .field { grid-column: 1 / -1; font-size: 13px; }
+  .topbar .field select, #problem-select { flex: 1 1 auto; width: 100%; max-width: none; min-width: 0; min-height: 40px; font-size: 14px; }
+  .topbar-actions #btn-check { grid-column: 1; }
+  .topbar-actions #btn-answer { grid-column: 2; }
+  .topbar-actions #btn-photo { grid-column: 3; }
+  .topbar-actions #btn-reward { grid-column: 4; }
+  .topbar-actions #btn-install { grid-column: 1 / -1; }
+  .topbar-actions #btn-check, .topbar-actions #btn-answer, .topbar-actions #btn-install {
+    min-height: 40px; font-size: 14px; padding: 6px 8px; justify-content: center;
+  }
+
+  /* 材料：①②③を縦に積む。見出しの行（①は右に「ケーブルを切る」）の下にチップを折り返して並べる（横スクロールで切れない） */
+  .material-bar { flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 8px; padding: 8px 10px; }
+  .material-bar .mb-group,
+  .material-bar .mb-group.mb-cables,
+  .material-bar .mb-group.mb-cut,
+  .material-bar .mb-group.mb-joins {
+    flex: 0 0 auto; width: 100%; min-width: 0; padding: 0; border: none;
+    display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  }
+  .material-bar .mb-group + .mb-group { border-top: 1px dashed var(--line); padding-top: 8px; }
+  .material-bar .mb-title { flex: 1 1 auto; white-space: normal; font-size: 12px; }
+  .material-bar .mb-title small { display: inline; font-size: 10.5px; }
+  .material-bar .mb-group .cable-palette { order: 3; flex: 1 1 100%; flex-wrap: wrap; overflow: visible; padding-bottom: 0; }
+  .material-bar .btn-cut { order: 2; font-size: 12.5px; padding: 6px 12px; }
+  .material-bar .cut-empty { max-width: none; white-space: normal; font-size: 11.5px; padding: 6px 9px; }
+  /* チップは1行に（短い名前・残りの数）。支給の長さ×本数などの2行目はチップの title に入っている */
+  .material-bar .cable-palette { gap: 6px; }
+  .material-bar .cable-chip { padding: 4px 7px 4px 5px; gap: 5px; min-height: 38px; }
+  .material-bar .cable-chip .cable-cores, .material-bar .cnt-full, .material-bar .nm-full { display: none; }
+  .material-bar .nm-short { display: inline; }
+  .material-bar .cable-chip .cable-name { font-size: 12.5px; }
+  .material-bar .cable-chip .cable-left { padding-left: 5px; font-size: 11px; }
+  .material-bar .cable-chip .cable-left b,
+  .material-bar .cable-chip.roll-chip .cable-left b,
+  .material-bar .cable-chip.piece-chip .cable-left b { font-size: 14px; }
+  .material-bar .cable-chip .cable-left small { font-size: 10px; }
+  .material-bar .cable-swatch { padding: 2px 4px; }
+  .material-bar .cable-swatch .core { width: 6px; height: 13px; }
+  .material-bar .mat-chip .mat-icon { width: 26px; height: 24px; font-size: 12px; }
+
+  /* 作業エリア：図は基本の幅で描き、横にスクロールする。拡大したときは枠の中で上下にも動かせる */
+  .ws-scroll { max-height: 72vh; }
+  .statusbar { font-size: 12.5px; }
+}
+
+/* ===== スマホ横（高さ 500px 以下・幅 1000px 以下） ===== */
+@media (max-height: 500px) and (max-width: 1000px) {
+  /* 見出しは1段に（題名は隠してロゴだけ） */
+  .topbar { flex-wrap: nowrap; gap: 8px; padding: 5px 10px; }
+  .topbar h1 { display: none; }
+  .brand .logo { width: 30px; height: 30px; font-size: 17px; }
+  .topbar-actions { flex: 1 1 auto; width: auto; min-width: 0; flex-wrap: nowrap; gap: 6px; justify-content: flex-end; }
+  .topbar .field { flex: 1 1 auto; min-width: 0; }
+  .topbar .field select, #problem-select { width: 100%; max-width: none; min-width: 0; min-height: 36px; }
+  .topbar-actions .btn { min-height: 36px; flex: 0 0 auto; }
+  .topbar-actions #btn-photo, .topbar-actions #btn-reward { width: 36px; height: 36px; }
+  /* 材料バー：①②③を1段ずつ。①を②と並べると①のチップが1つも見えないほど狭くなるため。
+     チップは横スクロールにせず折り返す（行の端で切れて見えないように）。
+     右の「元に戻す」「やり直す」は作業エリアの上へ移したので、そのための空きも無くす */
+  .material-bar .mb-group .cable-palette { flex: 1 1 0; min-width: 0; flex-wrap: wrap; overflow: visible; gap: 5px; }
+  .material-bar .mb-group.mb-cables,
+  .material-bar .mb-group.mb-cut,
+  .material-bar .mb-group.mb-joins { flex: 1 1 100%; padding: 0; border-left: none; }
+  .material-bar .mb-group + .mb-group { border-top: 1px dashed var(--line); padding-top: 5px; }
+  .material-bar .mb-group.mb-cut { flex-direction: row; align-items: center; gap: 8px; }
+  .material-bar .mb-title { min-width: 100px; }
+  .material-bar .cut-empty { max-width: none; white-space: nowrap; font-size: 10.5px; padding: 4px 8px; }
+  /* ①は「ケーブルを切る」を見出しの下に置き、チップに右の幅を全部使わせる */
+  .material-bar .mb-group.mb-cables {
+    display: grid; grid-template-columns: 100px minmax(0, 1fr); grid-template-rows: auto auto;
+    column-gap: 8px; row-gap: 4px; align-items: center;
+  }
+  .material-bar .mb-group.mb-cables .mb-title { grid-column: 1; grid-row: 1; align-self: end; }
+  .material-bar .mb-group.mb-cables .cable-palette { grid-column: 2; grid-row: 1 / span 2; }
+  .material-bar .btn-cut {
+    grid-column: 1; grid-row: 2; align-self: start; justify-self: start;
+    font-size: 11.5px; padding: 4px 8px; max-width: 100px; white-space: normal; line-height: 1.25;
+  }
+  .material-bar .cable-chip { padding: 3px 7px 3px 5px; gap: 5px; }
+  /* 作業エリアは画面の高さいっぱい（そこまでスクロールすると図だけが見える）。図は枠の中で上下左右に動かせる */
+  .stage { height: calc(100vh - 16px); height: calc(100dvh - 16px); min-height: 220px; }
+  .ws-scroll { flex: 1 1 auto; }
+  .ws-tools { padding: 4px 8px; }
+  .ws-tools .btn { min-height: 32px; }
+  .ghost-hint { padding: 4px 10px; font-size: 11.5px; }
+}
+
+/* ===========================================================
+   タブレット（幅 700〜1180px・高さ 501px 以上）（2026-10-10 第2段）
+   ・材料バーの「元に戻す」「1からやり直す」（.mb-actions）を、右上に重ねる（absolute）のをやめて、
+     材料バーの流れの中に置く。iPad 縦では①のチップと「ケーブルを切る」を隠して押せなかった。
+     横（1024×768・1180×820）では ③の行の右に置く（材料バーの高さも作業エリアも変わらない）
+   ・パソコン（幅 1181px 以上）は変えない。スマホ（上の節）とは条件が重ならない
+   =========================================================== */
+@media (min-width: 700px) and (max-width: 1180px) and (min-height: 501px) {
+  .material-bar .mb-actions {
+    position: static; width: auto; margin-left: auto; flex: 0 0 auto; align-self: center; gap: 4px;
+  }
+  .material-bar .mb-actions .btn { flex: 0 0 auto; }
+  .material-bar .mb-group.mb-joins { flex: 1 1 60%; padding-right: 0; }   /* 右の 132px の空きは要らなくなった */
+}
+
+/* ===== タブレット縦（iPad 縦など）＝作業エリアを幅いっぱいに =====
+   2列のままだと作業エリアが 460〜515px しかなく、文字・札が重なっていた（No.13 で 26〜33 件）。
+   1段目に「単線図｜材料」を左右に並べ、2段目に作業エリアを幅いっぱい（750〜1000px）で描く。
+   タブレット横と同じくらい重ならず、768×1024 でも1画面に収まる */
+@media (orientation: portrait) and (min-width: 700px) and (max-width: 1180px) {
+  .layout {
+    display: grid; grid-template-columns: minmax(250px, 36%) minmax(0, 1fr);
+    align-items: start; gap: 10px;
+    flex: 0 0 auto;   /* 高さを画面に合わせて縮めない（縮めると作業エリアの段が 0 にされる） */
+  }
+  .pane-left, .pane-center, .pane-right { display: contents; }
+  .card-single      { grid-column: 1; grid-row: 1; }
+  .material-bar     { grid-column: 2; grid-row: 1; }
+  .stage            { grid-column: 1 / -1; grid-row: 2; }
+  .statusbar        { grid-column: 1 / -1; grid-row: 3; }
+  .card-score       { grid-column: 1 / -1; grid-row: 4; }
+  .card-bundles     { grid-column: 1 / -1; grid-row: 5; }
+  .card-steps       { grid-column: 1 / -1; grid-row: 6; }
+  .card-conditions  { grid-column: 1 / -1; grid-row: 7; }
+  .card-tips        { grid-column: 1 / -1; grid-row: 8; }
+  .card-help        { grid-column: 1 / -1; grid-row: 9; }
+  .card-single .svg-frame { max-width: none; margin: 0; }
+  #single-line { max-height: none; }
+  .hint-text.dir-side { display: none; }
+  .hint-text.dir-below { display: block; }
+
+  /* 作業エリア：高さは図の縦横比どおり（余白を作らない）。案内は図に重ねず下の1行に */
+  .stage { display: flex; flex-direction: column; height: auto; min-height: 0; }
+  #workspace { height: auto; flex: none; }
+  .ghost-hint {
+    position: static; transform: none; left: auto; bottom: auto; flex: 0 0 auto;
+    border-radius: 0; padding: 6px 12px; font-size: 12.5px; line-height: 1.45; text-align: center;
+    background: #2a3644; color: #fff;
+  }
+  .ghost-hint.is-hidden { display: none; }
+
+  /* 材料：①②③を1段ずつ。見出しは左、①の「ケーブルを切る」は見出しの下。チップは短い名前で折り返す。
+     「元に戻す」「1からやり直す」は最後の段の右 */
+  .material-bar { gap: 6px 10px; padding: 8px 10px; }
+  .material-bar .mb-group.mb-cables,
+  .material-bar .mb-group.mb-cut,
+  .material-bar .mb-group.mb-joins { flex: 1 1 100%; padding: 0; border-left: none; }
+  .material-bar .mb-group + .mb-group { border-top: 1px dashed var(--line); padding-top: 6px; }
+  .material-bar .mb-group.mb-cut { flex-direction: row; align-items: center; gap: 8px; }
+  .material-bar .mb-title { min-width: 96px; }
+  .material-bar .mb-title small { display: none; }
+  .material-bar .mb-group .cable-palette { flex: 1 1 0; min-width: 0; flex-wrap: wrap; overflow: visible; gap: 5px; }
+  .material-bar .cut-empty { max-width: none; white-space: normal; font-size: 11.5px; padding: 5px 9px; }
+  .material-bar .mb-group.mb-cables {
+    display: grid; grid-template-columns: 96px minmax(0, 1fr); grid-template-rows: auto auto;
+    column-gap: 8px; row-gap: 4px; align-items: center;
+  }
+  .material-bar .mb-group.mb-cables .mb-title { grid-column: 1; grid-row: 1; align-self: end; }
+  .material-bar .mb-group.mb-cables .cable-palette { grid-column: 2; grid-row: 1 / span 2; }
+  .material-bar .btn-cut {
+    grid-column: 1; grid-row: 2; align-self: start; justify-self: start;
+    font-size: 12px; padding: 5px 9px; max-width: 96px; white-space: normal; line-height: 1.25;
+  }
+  .material-bar .cable-chip { padding: 4px 8px 4px 6px; gap: 6px; }
+  .material-bar .cable-chip .cable-cores, .material-bar .cnt-full, .material-bar .nm-full { display: none; }
+  .material-bar .nm-short { display: inline; }
+  .material-bar .mb-actions { flex: 1 1 100%; justify-content: flex-end; }
+  .material-bar .mb-actions .btn { font-size: 12px; padding: 6px 12px; }
+}

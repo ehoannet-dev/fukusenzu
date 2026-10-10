@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>複線図＆実配線トレーナー｜第二種電気工事士</title>
-<link rel="stylesheet" href="css/style.css?v=20261005a">
+<link rel="stylesheet" href="css/style.css?v=20261010b">
 <!-- ホーム画面に追加できるアプリ（PWA）の設定 -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0a6bd4">
@@ -48,7 +48,8 @@
       <div class="svg-frame">
         <svg id="single-line" viewBox="0 0 470 520" role="img" aria-label="単線図"></svg>
       </div>
-      <p class="hint-text">この図を読み取って、右の作業エリアで実際の電線をつなぎます。</p>
+      <p class="hint-text dir-side">この図を読み取って、右の作業エリアで実際の電線をつなぎます。</p>
+      <p class="hint-text dir-below">この図を読み取って、下の作業エリアで実際の電線をつなぎます。</p>
     </section>
 
     <details class="card card-conditions" open>
@@ -92,9 +93,11 @@
         <dt>リングスリーブの適用（刻印）</dt><dd>1.6×2本＝<b>小・○</b>／1.6×3〜4本＝<b>小・小</b>／2.0×1＋1.6×1〜2本＝<b>小・小</b>／2.0×2本＝<b>小・小</b><br>
         1.6×5〜6本＝<b>中・中</b>／2.0×1＋1.6×3〜5本＝<b>中・中</b>／2.0×2＋1.6×1〜3本＝<b>中・中</b>／2.0×3〜4本＝<b>中・中</b><br>
         <small>この表のとおりに自動で判定します（表にない組合せは「適用外」と出ます）</small></dd>
+        <dt class="phone-only">スマホで使うとき</dt><dd class="phone-only">作業エリアの図は、文字が重ならない大きさで描いてあるので、画面より横に広くなります。<b>図を指で左右になぞると動きます</b>（大きくしたときは上下にも）。図のすぐ上の<b>＋／－</b>で図の大きさを変え、<b>全体</b>で図全体を画面の幅に収めます（もう一度押すと元の大きさ）。ジョイントボックスを<b>ダブルタップ</b>すると、そのボックスを大きく表示します（何もない所をダブルタップで元の大きさ）。<b>元に戻す</b>・<b>1からやり直す</b>も図のすぐ上にあります</dd>
         <dt>拡大・移動</dt><dd>ボックスを<b>ダブルクリック</b>で拡大、<b>マウスホイール</b>でも拡大・縮小、背景ドラッグで移動。<b>何もない所をダブルクリック</b>すると元の大きさに戻ります</dd>
         <dt>元に戻す</dt><dd><b>元に戻す</b>ボタン（<kbd>⌘Z</kbd>）。押すたびに<b>何がいくつ変わったか</b>を画面下に出します（戻しすぎたときは <kbd>⇧⌘Z</kbd>）</dd>
-        <dt>1からやり直す</dt><dd><b>「1からやり直す」</b>（右上と材料バーの右）で、<b>切ったケーブル・電線・接続点・採点結果・スイッチ</b>をすべて消して何もない状態に戻します。押しまちがい防止のため<b>2回押し</b>（5秒で取り消し）。消したあとも <kbd>⌘Z</kbd> で戻せます</dd>
+        <dt>1からやり直す</dt><dd class="pc-only"><b>「1からやり直す」</b>（右上と材料バーの右）で、<b>切ったケーブル・電線・接続点・採点結果・スイッチ</b>をすべて消して何もない状態に戻します。押しまちがい防止のため<b>2回押し</b>（5秒で取り消し）。消したあとも <kbd>⌘Z</kbd> で戻せます</dd>
+        <dd class="phone-only"><b>「1からやり直す」</b>（作業エリアのすぐ上）で、<b>切ったケーブル・電線・接続点・採点結果・スイッチ</b>をすべて消して何もない状態に戻します。押しまちがい防止のため<b>2回押し</b>（5秒で取り消し）。消したあとも <kbd>⌘Z</kbd> で戻せます</dd>
       </dl>
     </details>
   </aside>
@@ -122,7 +125,20 @@
     </div>
 
     <div class="stage">
+      <!-- スマホだけで出す道具の行（タブレット・パソコンでは display:none。元に戻す・やり直しは材料バーの右にある） -->
+      <div class="ws-tools" role="toolbar" aria-label="作業エリアの操作">
+        <button id="btn-undo2" class="btn btn-sm" type="button">元に戻す</button>
+        <button id="btn-reset3" class="btn btn-sm btn-danger" type="button" title="ケーブル・電線・接続点をすべて消して、何もない状態に戻します">1からやり直す</button>
+        <span class="ws-zoom">
+          <button id="btn-zoom-out" class="btn btn-sm" type="button" title="図を小さくする" aria-label="図を小さくする">－</button>
+          <button id="btn-zoom-in" class="btn btn-sm" type="button" title="図を大きくする" aria-label="図を大きくする">＋</button>
+          <button id="btn-zoom-fit" class="btn btn-sm" type="button" title="図の全体を画面の幅に収める">全体</button>
+        </span>
+      </div>
+      <!-- スマホでは図を一定の幅で描き、この枠の中で左右（拡大時は上下も）にスクロールする。タブレット・パソコンでは display:contents（枠なしと同じ） -->
+      <div class="ws-scroll">
       <svg id="workspace" viewBox="0 0 1240 800" role="application" aria-label="作業エリア。端子やジョイントボックスをクリック（Tabで移動しEnterで選択）して電線を引きます"></svg>
+      </div>
       <div id="ghost-hint" class="ghost-hint">①図の「ケーブルを選ぶ」の枠をタップしてえらびます</div>
       <div id="core-picker" class="core-picker" hidden role="dialog" aria-label="心線を選ぶ"></div>
     </div>
@@ -151,18 +167,18 @@
 
 <div id="toast" class="toast" role="status" aria-live="assertive" hidden></div>
 
-<script src="js/problems.js?v=20260929a"></script>
-<script src="js/problems/no06.js?v=20260929a"></script>
-<script src="js/problems/no07.js?v=20260929a"></script>
-<script src="js/problems/no08.js?v=20260929a"></script>
-<script src="js/problems/no09.js?v=20260929a"></script>
-<script src="js/problems/no10.js?v=20260929a"></script>
-<script src="js/problems/no11.js?v=20260929a"></script>
-<script src="js/problems/no12.js?v=20260929a"></script>
-<script src="js/problems/no13.js?v=20260929a"></script>
-<script src="js/engine.js?v=20260929a"></script>
-<script src="js/render.js?v=20260929a"></script>
-<script src="js/app.js?v=20260929a"></script>
+<script src="js/problems.js?v=20261010b"></script>
+<script src="js/problems/no06.js?v=20261010b"></script>
+<script src="js/problems/no07.js?v=20261010b"></script>
+<script src="js/problems/no08.js?v=20261010b"></script>
+<script src="js/problems/no09.js?v=20261010b"></script>
+<script src="js/problems/no10.js?v=20261010b"></script>
+<script src="js/problems/no11.js?v=20261010b"></script>
+<script src="js/problems/no12.js?v=20261010b"></script>
+<script src="js/problems/no13.js?v=20261010b"></script>
+<script src="js/engine.js?v=20261010b"></script>
+<script src="js/render.js?v=20261010b"></script>
+<script src="js/app.js?v=20261010b"></script>
 <script src="js/pwa.js?v=20261005a"></script>
 </body>
 </html>

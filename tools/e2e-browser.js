@@ -3,24 +3,49 @@
      const s = document.createElement('script'); s.src = 'tools/e2e-browser.js'; document.head.appendChild(s);
      await __e2e('no6')          // → { score, passed, issues, log }
      await __e2eAll(['no1', 'no2'])
+     await __e2eAll(['no1'], { real: true })   // 画面に見えている場所をたたく（ほかの部品に隠れていたら ✗ 隠れていて押せない）
+     await __e2e('no13', { stopAfter: 'place' })   // 途中で止める（'place' | 'terminals' | 'bundles'、termLimit: n）
    画面のボタン・札・端子に click を送るだけで、アプリの内部関数は呼ばない（利用者と同じ操作）。 */
 (function () {
   'use strict';
   const wait = (ms) => new Promise(r => setTimeout(r, ms));
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
-  const click = (el) => el && el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  let clickRaw = (el) => el && el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+  let click = clickRaw;
+  /* real:true のときは、本物の指と同じく「画面に見えている場所」をたたく：要素を画面に出し（横スクロールの枠の中も）、
+     中心の点にいちばん上にある要素へ click を送る。ほかの部品が上に重なっていれば、そちらに当たって失敗する（2026-10-10） */
+  const KEY = '[data-term],[data-slot],[data-connect],[data-cp],[data-roll],[data-piece],button,a';
+  const sig = (e) => { const k = e && e.closest(KEY); return k ? k.outerHTML.slice(0, 160) + '|' + (k.dataset ? JSON.stringify(k.dataset) : '') : null; };
+  async function tapReal(el, log) {
+    if (!el) return;
+    el.scrollIntoView({ block: 'center', inline: 'center' });
+    await wait(40);
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const top = document.elementFromPoint(x, y);
+    const k0 = el.closest(KEY);
+    const ok = top && (top === el || el.contains(top) || (k0 && top.closest(KEY) === k0) || sig(top) === sig(el));
+    if (!ok) log.push('✗ 隠れていて押せない：' + (k0 ? k0.outerHTML.slice(0, 90) : el.tagName) + ' ← 上にあるもの：' + (top ? (top.outerHTML || top.tagName).slice(0, 90) : 'なし'));
+    const opt = { bubbles: true, cancelable: true, clientX: x, clientY: y };
+    const tgt = top || el;
+    tgt.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ pointerType: 'touch' }, opt)));
+    window.dispatchEvent(new PointerEvent('pointerup', Object.assign({ pointerType: 'touch' }, opt)));
+    tgt.dispatchEvent(new MouseEvent('click', opt));
+  }
 
   async function e2e(id, opts) {
     const o = opts || {};
-    const P = window.PROBLEMS.find(p => p.id === id);
     const log = [];
+    click = o.real ? (el) => tapReal(el, log) : clickRaw;
+    const P = window.PROBLEMS.find(p => p.id === id);
     const fail = (m) => { log.push('✗ ' + m); };
     const sel = $('#problem-select');
     sel.value = id; sel.dispatchEvent(new Event('change'));
     await wait(80);
-    // まっさらにする（2回押し）
-    if ($('#btn-reset')) { click($('#btn-reset')); await wait(20); click($('#btn-reset')); await wait(40); }
+    // まっさらにする（2回押し）。スマホの幅では見出しの「1からやり直す」は隠れているので、見えているものを押す
+    const resetBtn = ['#btn-reset', '#btn-reset3', '#btn-reset2'].map(s => $(s)).find(b => b && b.offsetParent !== null) || $('#btn-reset');
+    if (resetBtn) { await click(resetBtn); await wait(20); await click(resetBtn); await wait(40); }
 
     const dev = (did) => P.devices.find(d => d.id === did);
     const groupOf = (ep) => { const d = dev(String(ep).split('.')[0]); return d ? d.group : null; };
@@ -35,24 +60,26 @@
         const type = nd[i];
         const chip = $(`#materials [data-roll="${type}"]`);
         if (!chip) { fail(`支給ケーブル ${type} が無い`); continue; }
-        if (!chip.classList.contains('is-picked')) { click(chip); await wait(10); }
-        click($('#btn-cut')); await wait(10);
+        if (!chip.classList.contains('is-picked')) { await click(chip); await wait(10); }
+        await click($('#btn-cut')); await wait(10);
         const rb = $$('#core-picker [data-cp="cutrun"]').find(b => b.dataset.key.split('#')[0] === run.id);
-        if (!rb) { fail(`切る区間に ${run.id} が出ない`); click($('#core-picker [data-cp="close"]')); continue; }
-        click(rb); await wait(10);
+        if (!rb) { fail(`切る区間に ${run.id} が出ない`); await click($('#core-picker [data-cp="close"]')); continue; }
+        await click(rb); await wait(10);
         const lb = $$('#core-picker [data-cp="cutlen"]').find(b => +b.dataset.len === run.cut);
-        if (!lb) { fail(`${run.id} の長さの選択肢に ${run.cut} が無い`); click($('#core-picker [data-cp="close"]')); continue; }
-        click(lb); await wait(10);
+        if (!lb) { fail(`${run.id} の長さの選択肢に ${run.cut} が無い`); await click($('#core-picker [data-cp="close"]')); continue; }
+        await click(lb); await wait(10);
         const badge = $(`#workspace g.slot-badge[data-slot="${run.id}#${i}"]`);
         if (!badge) { fail(`札 ${run.id}#${i} が無い`); continue; }
-        click(badge); await wait(10);
+        await click(badge); await wait(10);
         const pb = $$('#core-picker [data-cp="pick"]');
         if (pb.length !== 1) { fail(`${run.id}#${i}：置けるケーブルが ${pb.length} 本`); }
-        if (pb[0]) { click(pb[0]); await wait(10); }
+        if (pb[0]) { await click(pb[0]); await wait(10); }
       }
     }
     // 札を閉じる
-    const close = $('#core-picker [data-cp="close"]'); if (close) click(close);
+    const close = $('#core-picker [data-cp="close"]'); if (close) await click(close);
+    // 途中で止める（画面の確認・スクリーンショット用）：stopAfter 'place' | 'terminals' | 'bundles'、termLimit＝端子への接続を n 本で止める
+    if (o.stopAfter === 'place') return { id, partial: 'place', log };
 
     /* ---- 模範解答の電線に、置き場（slot）と心線の色を割り当てる ---- */
     const aw = P.answer.wires.map(w => Object.assign({}, w));
@@ -77,35 +104,39 @@
 
     const pickCore = async (w) => {
       const badge = $(`#workspace g.slot-badge[data-slot="${w.slot}"]`);
-      click(badge); await wait(10);
+      await click(badge); await wait(10);
       const cb = $(`#core-picker [data-cp="color"][data-color="${w.color}"]`);
       if (!cb) { fail(`${w.slot} に ${w.color} の心線ボタンが無い`); return false; }
-      click(cb); await wait(10);
+      await click(cb); await wait(10);
       return true;
     };
     const tapTerm = async (tid) => {
       const g = $(`#workspace g[data-term="${tid}"]`);
       if (!g) { fail(`端子 ${tid} が無い`); return false; }
-      click(g.querySelector('circle.term-dot') || g); await wait(10);
+      await click(g.querySelector('circle.term-dot') || g); await wait(10);
       return true;
     };
     const tapConnect = async (what) => {
       const b = $('#workspace [data-connect]');
       if (!b) { fail(`「接続する」ボタンが出ない（${what}）`); return false; }
-      click(b.querySelector('rect') || b); await wait(15);
+      await click(b.querySelector('rect') || b); await wait(15);
       return true;
     };
 
     /* ---- ③ 心線を器具の端子へ ---- */
+    let nTerm = 0;
     for (const w of aw) {
       if (w.jumper || !w.slot) continue;
       for (const ep of [w.a, w.b]) {
         if (String(ep).indexOf('.') < 0) continue;
+        if (o.termLimit != null && nTerm >= o.termLimit) return { id, partial: 'terminals', log };
         if (!(await pickCore(w))) continue;
         if (!(await tapTerm(ep))) continue;
         await tapConnect(w.key + ' → ' + ep);
+        nTerm++;
       }
     }
+    if (o.stopAfter === 'terminals') return { id, partial: 'terminals', log };
     /* ---- ④ ボックスの中で接続 ---- */
     for (const b of P.answer.bundles) {
       for (const k of b.wires) {
@@ -115,6 +146,7 @@
       }
       await tapConnect('接続点 ' + b.wires.join(' + '));
     }
+    if (o.stopAfter === 'bundles') return { id, partial: 'bundles', log };
     /* ---- ⑤ 渡り線（ケーブルを使わない区間） ---- */
     for (const w of aw) {
       if (!w.jumper) continue;
@@ -122,7 +154,7 @@
     }
 
     /* ---- ⑥ 採点 ---- */
-    click($('#btn-check')); await wait(30);
+    await click($('#btn-check')); await wait(30);
     const score = +$('#score-value').textContent;
     const passed = /合格！/.test($('#score-label').textContent);
     const issues = $$('#issues li').map(li => li.className.replace('is-focusable', '').trim() + ':' + li.textContent.trim().slice(0, 90));
@@ -131,9 +163,10 @@
     return { id, score, passed, issues: issues.filter(s => !/^lv-ok/.test(s)).slice(0, 12), log };
   }
 
-  async function e2eAll(ids) {
+  async function e2eAll(ids, opts) {
     const out = {};
-    for (const id of ids) out[id] = await e2e(id);
+    for (const id of ids) out[id] = await e2e(id, opts);
+    click = clickRaw;
     return out;
   }
 

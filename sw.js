@@ -5,7 +5,7 @@
    ・VERSION を上げると古い保存を捨てて、起動時に取り直す（公開するたびに上げる）
    ・別のサイト（GitHub の API など）への通信には触らない
    =========================================================== */
-const VERSION = 'v20261008a';
+const VERSION = 'v20261010b';
 const CACHE = 'fukusenzu-' + VERSION;
 const SHELL = [
   './', './index.html', './photo.html', './manifest.webmanifest',

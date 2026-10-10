@@ -38,8 +38,69 @@
     pickBox: null,       // えらんだ心線が集まるジョイントボックス
     pickTerm: null,      // つなぎ先にえらんだ端子
     selectedLink: null,  // えらんだ「つなぎ目」（接続点との1本／端子との1本）
-    hintSlot: null       // 「ここにケーブルが要る」と光らせる区間
+    hintSlot: null,      // 「ここにケーブルが要る」と光らせる区間
+    wsZoom: 1            // スマホだけ：作業エリアを描く大きさ（1＝基本の幅 PHONE_W、'fit'＝枠に全体を収める）
   };
+
+  /* ---------------- スマホ（縦・横）の作業エリア（2026-10-10） ----------------
+     スマホでは作業エリアを画面の幅に縮めず、基本の幅 PHONE_W で描いて、枠（.ws-scroll）の中で左右にスクロールする。
+     文字・札・端子は「画面上で何px」で描くので、狭く縮めると相対的に大きくなって重なる。幅を保てばタブレット並みに重ならない。
+     ＋／－は描く大きさを段階で変え（ZOOMS）、「全体」は枠に全体を収める。css/style.css の同じ条件（PHONE_MQ）と対。
+     タブレット・パソコンでは何もしない（.ws-scroll は display:contents、svg の大きさは CSS のまま）。 */
+  const PHONE_MQ = '(max-width: 699px), (max-height: 500px) and (max-width: 1000px)';
+  const PHONE_W = 700;
+  const ZOOMS = [1, 1.4, 1.9];
+  function isPhone() { return !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); }
+  function wsScroller() { const ws = $('#workspace'); return ws && ws.parentNode && ws.parentNode.classList && ws.parentNode.classList.contains('ws-scroll') ? ws.parentNode : null; }
+  // 作業エリアの svg の大きさ（px）を決める。スマホ以外では CSS に任せる（何も書かない）
+  function sizeWorkspace() {
+    const ws = $('#workspace');
+    const sc = wsScroller();
+    if (!ws) return;
+    if (!sc || !isPhone()) {
+      if (ws.style.width || ws.style.height) { ws.style.width = ''; ws.style.height = ''; }
+      return;
+    }
+    const b = baseBox();
+    const availW = sc.clientWidth || (sc.parentNode && sc.parentNode.clientWidth) || 340;
+    let w;
+    if (view.wsZoom === 'fit') {
+      // 横向きは枠の高さにも収める（縦向きは枠の高さが図に合わせて決まるので幅だけ）
+      const landscape = window.matchMedia('(max-height: 500px)').matches;
+      const availH = landscape ? sc.clientHeight : 0;
+      w = availH > 40 ? Math.min(availW, availH * b.w / b.h) : availW;
+    } else {
+      w = Math.max(availW, Math.round(PHONE_W * (+view.wsZoom || 1)));
+    }
+    w = Math.floor(w);
+    const h = Math.round(w * b.h / b.w);
+    if (ws.style.width !== w + 'px') ws.style.width = w + 'px';
+    if (ws.style.height !== h + 'px') ws.style.height = h + 'px';
+  }
+  // スマホの拡大・縮小：大きさを変えても、いま見ている所（指定があればその点）が枠の真ん中に来るようにする
+  function phoneZoomTo(z, focusPt) {
+    const sc = wsScroller();
+    const ws = $('#workspace');
+    if (!sc || !ws) return;
+    const b = baseBox();
+    const oldW = ws.clientWidth || 1, oldH = ws.clientHeight || 1;
+    let fx, fy;   // 図の中の割合（0〜1）
+    if (focusPt) { fx = (focusPt.x - b.x) / b.w; fy = (focusPt.y - b.y) / b.h; }
+    else { fx = (sc.scrollLeft + sc.clientWidth / 2) / oldW; fy = (sc.scrollTop + sc.clientHeight / 2) / oldH; }
+    view.wsZoom = z;
+    view.viewBox = null;
+    draw();
+    const nw = ws.clientWidth, nh = ws.clientHeight;
+    sc.scrollLeft = Math.max(0, fx * nw - sc.clientWidth / 2);
+    sc.scrollTop = Math.max(0, fy * nh - sc.clientHeight / 2);
+  }
+  function phoneZoomStep(dir) {
+    const cur = view.wsZoom === 'fit' ? 0 : ZOOMS.indexOf(+view.wsZoom);
+    const idx = view.wsZoom === 'fit' ? (dir > 0 ? 0 : -1) : Math.max(-1, Math.min(ZOOMS.length - 1, (cur < 0 ? 0 : cur) + dir));
+    phoneZoomTo(idx < 0 ? 'fit' : ZOOMS[idx]);
+    const zl = view.wsZoom === 'fit' ? '全体' : Math.round(100 * view.wsZoom) + '%';
+    toast(view.wsZoom === 'fit' ? '図の全体を表示しています（＋で大きく）' : `図の大きさ ${zl}（指で左右に動かせます）`);
+  }
 
   /* ---------------- 状態 ---------------- */
   function emptyState(p) {
@@ -809,6 +870,7 @@
     const keep = act && ws.contains(act)
       ? ['term', 'jb', 'end', 'bundle', 'wire'].map(k => act.dataset && act.dataset[k] ? [k, act.dataset[k]] : null).filter(Boolean)[0]
       : null;
+    sizeWorkspace();
     try {
       Render.drawWorkspace(ws, problem, state, view);
     } catch (err) {
@@ -2271,7 +2333,8 @@
     state.seq = 1;
     Object.keys(state.switches).forEach(k => { state.switches[k] = false; });
     state.power = false;
-    view.pending = null; view.cursor = null; view.focus = null; view.viewBox = null;
+    view.pending = null; view.cursor = null; view.focus = null; view.viewBox = null; view.wsZoom = 1;
+    const scr = wsScroller(); if (scr) { scr.scrollLeft = 0; scr.scrollTop = 0; }
     view.selectedWire = view.selectedBundle = view.selectedSlot = view.selectedLink = null;
     view.pickCable = view.dragCable = view.hintSlot = view.corePicker = null;
     view.pickRoll = null; view.cutPicker = null;
@@ -2289,6 +2352,7 @@
     setStatus('<b>まっさらにしました。</b>' + firstHint());
     toast('すべて消しました（⌘Zで戻せます）');
     afterChange();
+    scrollWorkspaceToContent();   // スマホ：図の大きさを元に戻したので、器具の描いてある所から見せる
   }
 
   function setColor(c, announce) {
@@ -2346,7 +2410,8 @@
     try { localStorage.setItem(LAST_KEY, problem.id); } catch (e) { /* 使えなくても続行 */ }
     state = emptyState(problem);
     history = []; future = []; savedWork = null; showingAnswer = false;
-    view.pending = null; view.cursor = null; view.focus = null; view.viewBox = null;
+    view.pending = null; view.cursor = null; view.focus = null; view.viewBox = null; view.wsZoom = 1;
+    const scr = wsScroller(); if (scr) { scr.scrollLeft = 0; scr.scrollTop = 0; }
     view.selectedWire = view.selectedBundle = view.selectedSlot = view.selectedLink = null; view.selectedEnds.clear();
     view.pickCable = view.dragCable = view.hintSlot = view.corePicker = null;
     view.pickRoll = null; view.cutPicker = null;
@@ -2364,6 +2429,21 @@
     $('#issues').innerHTML = '';
     afterChange();
     if (!state.wires.length) setStatus(firstHint());
+    scrollWorkspaceToContent();
+  }
+
+  /* スマホ：問題を開いたら、図の左の何も無い所を飛ばして、器具の描いてある所から見せる */
+  function scrollWorkspaceToContent() {
+    const sc = wsScroller();
+    const ws = $('#workspace');
+    if (!sc || !ws || !isPhone() || sc.scrollWidth <= sc.clientWidth + 1) return;
+    let x0 = Infinity;
+    ws.querySelectorAll(':scope > g').forEach(g => {
+      try { const b = g.getBBox(); if (b.width || b.height) x0 = Math.min(x0, b.x); } catch (e) { /* 描けていない */ }
+    });
+    if (!isFinite(x0)) return;
+    const b = baseBox();
+    sc.scrollLeft = Math.max(0, (x0 - b.x) * ws.clientWidth / b.w - 8);
   }
 
   function init() {
@@ -2541,26 +2621,52 @@
     });
 
     stage.addEventListener('dblclick', (e) => {
+      if (isPhone()) {
+        // スマホ：ボックスをダブルタップ → 大きくしてそのボックスを真ん中に。何もない所 → 基本の大きさに戻す
+        const jbp = e.target.closest('[data-jb]');
+        if (jbp) {
+          const d = Engine.deviceOf(problem, jbp.dataset.jb);
+          view.pending = null;
+          const z = view.wsZoom === 'fit' ? 1 : +view.wsZoom || 1;
+          phoneZoomTo(ZOOMS.find(x => x > z) || ZOOMS[ZOOMS.length - 1], d ? { x: d.x, y: d.y } : null);
+          return;
+        }
+        if (e.target.closest('[data-term],[data-end],[data-bundle],[data-wire],[data-sw],[data-slot],[data-connect]')) return;
+        if (view.wsZoom !== 1 || view.viewBox) phoneZoomTo(1);
+        return;
+      }
       const jb = e.target.closest('[data-jb]');
       if (jb) { view.pending = null; zoomToDevice(jb.dataset.jb); return; }
       if (e.target.closest('[data-term],[data-end],[data-bundle],[data-wire],[data-sw]')) return;
       resetZoom();
     });
     stage.addEventListener('wheel', (e) => {
+      if (isPhone()) return;   // スマホの幅では、ホイールは枠のスクロールに使う
       e.preventDefault();
       zoomAt(svgPoint(stage, e), e.deltaY > 0 ? 1.12 : 0.89);
     }, { passive: false });
     stage.addEventListener('pointerdown', (e) => {
       suppressClick = false;
+      // スマホ：拡大（viewBox）していなければ、図を指でなぞるのはブラウザのスクロールに任せる（図をずらさない）
+      if (isPhone() && !view.viewBox) return;
       if (e.target.closest('[data-term],[data-jb],[data-end],[data-bundle],[data-wire],[data-sw]')) return;
       panFrom = { sx: e.clientX, sy: e.clientY, box: currentBox() };
     });
     window.addEventListener('pointerup', () => { panFrom = null; });
     window.addEventListener('pointercancel', () => { panFrom = null; });
     const zin = $('#btn-zoom-in'), zout = $('#btn-zoom-out'), zfit = $('#btn-zoom-fit');
-    if (zin) zin.addEventListener('click', () => { const b = currentBox(); zoomAt({ x: b.x + b.w / 2, y: b.y + b.h / 2 }, 0.8); });
-    if (zout) zout.addEventListener('click', () => { const b = currentBox(); zoomAt({ x: b.x + b.w / 2, y: b.y + b.h / 2 }, 1.25); });
-    if (zfit) zfit.addEventListener('click', resetZoom);
+    if (zin) zin.addEventListener('click', () => { if (isPhone()) { phoneZoomStep(1); return; } const b = currentBox(); zoomAt({ x: b.x + b.w / 2, y: b.y + b.h / 2 }, 0.8); });
+    if (zout) zout.addEventListener('click', () => { if (isPhone()) { phoneZoomStep(-1); return; } const b = currentBox(); zoomAt({ x: b.x + b.w / 2, y: b.y + b.h / 2 }, 1.25); });
+    if (zfit) zfit.addEventListener('click', () => {
+      if (isPhone()) { phoneZoomTo(view.wsZoom === 'fit' ? 1 : 'fit'); toast(view.wsZoom === 'fit' ? '図の全体を表示しています（もう一度押すと元の大きさ）' : '元の大きさに戻しました'); return; }
+      resetZoom();
+    });
+    // 画面の向き・大きさが変わったら描き直す（文字・札の大きさは画面の幅で決まるため。スマホの幅の切り替えもここで反映）
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { draw(); }, 150);
+    });
     document.addEventListener('keydown', onKey);
 
     const bcEl = $('#btn-connect');
@@ -2572,12 +2678,14 @@
       else if (view.selectedBundle) deleteBundle(view.selectedBundle);
     });
     $('#btn-undo').addEventListener('click', undo);
+    const undo2 = $('#btn-undo2');   // スマホの作業エリアの上の行（同じ動き）
+    if (undo2) undo2.addEventListener('click', undo);
     const redoBtn = $('#btn-redo');
     if (redoBtn) redoBtn.addEventListener('click', redo);
     $('#btn-check').addEventListener('click', runGrade);
     $('#btn-answer').addEventListener('click', toggleAnswer);
     /* 1からやり直す：2回押しで実行（押しまちがい防止。確認ダイアログが出ない環境があるため） */
-    const resetBtns = [$('#btn-reset'), $('#btn-reset2')].filter(Boolean);
+    const resetBtns = [$('#btn-reset'), $('#btn-reset2'), $('#btn-reset3')].filter(Boolean);
     const RESET_LABEL = resetBtns.map(b => b.textContent);
     let resetArmed = null;
     const disarmReset = () => {
