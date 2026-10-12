@@ -5,7 +5,7 @@
    ・VERSION を上げると古い保存を捨てて、起動時に取り直す（公開するたびに上げる）
    ・別のサイト（GitHub の API など）への通信には触らない
    =========================================================== */
-const VERSION = 'v20261010b';
+const VERSION = 'v20261012a';
 const CACHE = 'fukusenzu-' + VERSION;
 const SHELL = [
   './', './index.html', './photo.html', './manifest.webmanifest',
@@ -15,8 +15,11 @@ const SHELL = [
   './js/engine.js', './js/render.js', './js/app.js', './js/pwa.js', './js/photo.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png', './icons/apple-touch-icon.png',
   './rewards.html', './reward.html', './reward_ceiling_square.html', './reward_ceiling_round.html',
+  './reward_switch_single.html', './reward_switch_3way.html', './reward_switch_4way.html', './reward_switch_pilot.html', './reward_pilot_lamp.html', './reward_outlet_single.html', './reward_outlet_double.html', './reward_outlet_eet.html', './reward_outlet_exposed.html', './reward_outlet_20a.html',
   './models/lamp_black.glb', './models/ceiling_square.glb', './models/ceiling_round.glb',
-  './img/rewards/lamp.jpg', './img/rewards/ceiling_square.jpg', './img/rewards/ceiling_round.jpg'
+  './models/switch_single.glb', './models/switch_3way.glb', './models/switch_4way.glb', './models/switch_pilot.glb', './models/pilot_lamp.glb', './models/outlet_single.glb', './models/outlet_double.glb', './models/outlet_eet.glb', './models/outlet_exposed.glb', './models/outlet_20a.glb',
+  './img/rewards/lamp.jpg', './img/rewards/ceiling_square.jpg', './img/rewards/ceiling_round.jpg',
+  './img/rewards/switch_single.jpg', './img/rewards/switch_3way.jpg', './img/rewards/switch_4way.jpg', './img/rewards/switch_pilot.jpg', './img/rewards/pilot_lamp.jpg', './img/rewards/outlet_single.jpg', './img/rewards/outlet_double.jpg', './img/rewards/outlet_eet.jpg', './img/rewards/outlet_exposed.jpg', './img/rewards/outlet_20a.jpg'
 ];
 
 self.addEventListener('install', (e) => {
